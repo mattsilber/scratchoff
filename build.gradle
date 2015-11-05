@@ -47,7 +47,7 @@ ext {
     libraryName = 'scratchoff'
     artifact = 'scratchoff'
 
-    libraryDescription = 'A simply library for implementing a scratchoff-type system.'
+    libraryDescription = 'A simple library for implementing a scratchoff-type system.'
     libraryVersion = '1.0.0'
 
     developerId = 'mattsilber'

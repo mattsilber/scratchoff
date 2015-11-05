@@ -1,6 +1,6 @@
 # Scratchoff
 
-A simply library for implementing a scratchoff-type system. (screenshots coming soon)
+A simple library for implementing a scratchoff-type system.
 
 ![Scratchoff Sample](https://github.com/mattsilber/scratchoff/raw/master/scratchoff.gif)
 
