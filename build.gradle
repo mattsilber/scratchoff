@@ -41,7 +41,7 @@ group = 'com.guardanis'
 
 ext {
     bintrayRepo = 'maven'
-    bintrayName = 'applock'
+    bintrayName = 'scratchoff'
 
     publishedGroupId = 'com.guardanis'
     libraryName = 'scratchoff'
