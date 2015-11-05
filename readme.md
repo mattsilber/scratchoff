@@ -8,15 +8,13 @@ A simple library for implementing a scratchoff-type system.
 
 ```
     repositories {
-        maven { url "http://dl.bintray.com/mattsilber/maven" }
+        jcenter()
     }
 
     dependencies {
         compile('com.guardanis:scratchoff:1.0.0')
     }
 ```
-
-I should have it on *jcenter* soon enough...
 
 # Usage
 
