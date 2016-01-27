@@ -1,5 +1,7 @@
 package com.guardanis.scratchoff;
 
+import android.graphics.Color;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -39,22 +41,25 @@ public class ScratchViewController implements OnTouchListener, ScratchImageLayou
     }
 
     public void reset() {
-        imageLayout.initialize(this);
+        if(processor != null)
+            processor.cancel();
+
+        processor = new ScratchGridActionProcessor(this);
+
+        imageLayout.clearAnimation();
         imageLayout.setVisibility(View.VISIBLE);
-        imageLayout.requestLayout();
+        imageLayout.invalidate();
+
+        imageLayout.initialize(this);
     }
 
     @Override
     public void onGridAvailable(int width, int height) {
         totalGridItemsCount = width * height;
-        setupProcessor();
+
         enabled = true;
-    }
+        thresholdReached = false;
 
-    private void setupProcessor() {
-        if(processor != null) processor.cancel();
-
-        processor = new ScratchGridActionProcessor(this);
         processor.start();
     }
 

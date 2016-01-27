@@ -10,7 +10,9 @@ import android.graphics.Path;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -18,6 +20,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ScratchImageLayout extends LinearLayout {
 
@@ -28,9 +31,8 @@ public class ScratchImageLayout extends LinearLayout {
     private Bitmap imageMutable;
 
     private GridAvailableListener gridListener;
-    private ImageView imageView;
 
-    private ArrayList<Path> paths = new ArrayList<Path>();
+    private List<Path> paths = new ArrayList<Path>();
 
     private Paint clearPaint;
     private boolean cleared = false;
@@ -50,13 +52,17 @@ public class ScratchImageLayout extends LinearLayout {
 
     public void initialize(ScratchViewController controller) {
         this.gridListener = controller;
-        this.imageView = (ImageView) getChildAt(0);
         this.cleared = false;
+        this.imageMutable = null;
+        this.paths = new ArrayList<Path>();
+
         initializeClearPaint(controller.getTouchRadius());
 
         setWillNotDraw(false);
         ViewHelper.disableHardwareAcceleration(this);
+
         setBehindView(controller.getViewBehind());
+        requestLayout();
     }
 
     private void initializeClearPaint(int touchRadius) {
@@ -82,13 +88,10 @@ public class ScratchImageLayout extends LinearLayout {
     }
 
     private void initializeBehindView(View view) {
-        view.setDrawingCacheEnabled(true);
-        Bitmap imageBehind = Bitmap.createBitmap(view.getDrawingCache());
-        view.setDrawingCacheEnabled(false);
+        ViewGroup.LayoutParams params = getLayoutParams();
+        params.width = view.getWidth();
+        params.height = view.getHeight();
 
-        android.view.ViewGroup.LayoutParams params = getLayoutParams();
-        params.width = imageBehind.getWidth();
-        params.height = imageBehind.getHeight();
         this.setLayoutParams(params);
     }
 
@@ -99,16 +102,21 @@ public class ScratchImageLayout extends LinearLayout {
                 ViewHelper.removeOnGlobalLayoutListener(ScratchImageLayout.this, this);
             }
         });
+        requestLayout();
     }
 
     private void initializePostDisplay() {
         setDrawingCacheEnabled(true);
+        buildDrawingCache();
+
         Bitmap cached = getDrawingCache();
         imageMutable = Bitmap.createBitmap(cached);
+
         setDrawingCacheEnabled(false);
-        imageView.setImageDrawable(null);
 
         setBackgroundColor(Color.TRANSPARENT);
+        hideChildren();
+
         gridListener.onGridAvailable(imageMutable.getWidth(), imageMutable.getHeight());
     }
 
@@ -116,18 +124,21 @@ public class ScratchImageLayout extends LinearLayout {
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        if(cleared || imageMutable == null) return;
+        if(cleared || imageMutable == null)
+            return;
         else{
             canvas.drawBitmap(imageMutable, 0, 0, null);
-            for(Path path : getPaths()) canvas.drawPath(path, clearPaint);
+
+            for(Path path : getPaths())
+                canvas.drawPath(path, clearPaint);
         }
     }
 
-    public void addPaths(ArrayList<Path> paths) {
+    public void addPaths(List<Path> paths) {
         getPaths().addAll(paths);
     }
 
-    private synchronized ArrayList<Path> getPaths() {
+    private synchronized List<Path> getPaths() {
         return paths;
     }
 
@@ -141,7 +152,8 @@ public class ScratchImageLayout extends LinearLayout {
     public void onClear(boolean fade) {
         this.cleared = false;
 
-        if(fade) fadeOut();
+        if(fade)
+            fadeOut();
         else invalidate();
     }
 
@@ -156,9 +168,20 @@ public class ScratchImageLayout extends LinearLayout {
 
             public void onAnimationEnd(Animation animation) {
                 setVisibility(View.GONE);
+                showChildren();
             }
         });
         startAnimation(anim);
+    }
+
+    private void hideChildren(){
+        for(int i = 0; i < getChildCount(); i++)
+            getChildAt(i).setVisibility(View.GONE);
+    }
+
+    private void showChildren(){
+        for(int i = 0; i < getChildCount(); i++)
+            getChildAt(i).setVisibility(View.VISIBLE);
     }
 
 }

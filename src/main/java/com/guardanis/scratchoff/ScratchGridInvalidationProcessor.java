@@ -6,7 +6,7 @@ import java.util.ArrayList;
 
 public class ScratchGridInvalidationProcessor extends ProcessorThread {
 
-    private static final int SLEEP_DELAY = 15;
+    private static final int SLEEP_DELAY = 20;
 
     private ScratchViewController controller;
     private ArrayList<Path> queuedEvents = new ArrayList<Path>();
@@ -25,17 +25,11 @@ public class ScratchGridInvalidationProcessor extends ProcessorThread {
             ArrayList<Path> tempEvents = queuedEvents;
             queuedEvents = new ArrayList<Path>();
 
-            if(tempEvents.size() > 0) requestUIUpdate();
+            if(tempEvents.size() > 0)
+                controller.getScratchImageLayout().postInvalidate();
+
             Thread.sleep(SLEEP_DELAY);
         }
-    }
-
-    private void requestUIUpdate() {
-        controller.getScratchImageLayout().post(new Runnable() {
-            public void run() {
-                controller.getScratchImageLayout().invalidate();
-            }
-        });
     }
 
 }

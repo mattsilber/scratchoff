@@ -26,12 +26,14 @@ public class ScratchGridActionProcessor extends ProcessorThread {
 
     public void onReceieveMotionEvent(MotionEvent e, boolean actionDown) {
         int[] event = new int[]{(int) e.getX(), (int) e.getY()};
+
         if(!actionDown){
             Path path = new Path();
             path.moveTo(lastTouchEvent[0], lastTouchEvent[1]);
             path.lineTo(event[0], event[1]);
             queuedEvents.add(path);
         }
+
         lastTouchEvent = event;
     }
 

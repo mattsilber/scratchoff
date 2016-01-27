@@ -5,69 +5,68 @@ import android.graphics.Color;
 
 public class ScratchGridThresholdProcessor extends ProcessorThread {
 
-    private interface CachedImageEventListener {
-        public void onCachedImageAvailable(Bitmap bitmap);
-    }
-
-    private static final int SLEEP_DELAY = 500;
+    private static final int SLEEP_DELAY = 750;
 
     private ScratchViewController controller;
-    private Bitmap cachedBitmap;
+
+    private Bitmap currentBitmap;
+    private boolean thresholdReached = false;
 
     public ScratchGridThresholdProcessor(ScratchViewController controller) {
         this.controller = controller;
     }
 
     @Override
+    public void start(){
+        thresholdReached = false;
+        safelyReleaseCurrentBitmap();
+
+        super.start();
+    }
+
+    @Override
     protected void doInBackground() throws Exception {
-        while(isActive()){
-            handleThresholdCheck();
+        while(isActive() && !controller.isThresholdReached()){
+            getUpdatedDrawingCache();
+
+            while(currentBitmap == null)
+                Thread.sleep(50);
+
+            processImage();
+
             Thread.sleep(SLEEP_DELAY);
         }
     }
 
-    private void handleThresholdCheck() throws Exception {
-        if(controller.isThresholdReached()) return;
-        else{
-            resetCachedImage();
+    private void processImage(){
+        double percentScratched = getScratchedCount(currentBitmap) / (currentBitmap.getWidth() * currentBitmap.getHeight());
 
-            while(cachedBitmap == null) Thread.sleep(50);
-
-            double percentScratched = getScratchedCount() / (cachedBitmap.getWidth() * cachedBitmap.getHeight());
-            if(controller.getThresholdPercent() < percentScratched) postThresholdReached();
+        if(controller.getThresholdPercent() < percentScratched && !thresholdReached){
+            thresholdReached = true;
+            postThresholdReached();
         }
+
+        safelyReleaseCurrentBitmap();
     }
 
-    private double getScratchedCount() {
-        int[] pixels = new int[cachedBitmap.getWidth() * cachedBitmap.getHeight()];
-        cachedBitmap.getPixels(pixels, 0, cachedBitmap.getWidth(), 0, 0, cachedBitmap.getWidth(), cachedBitmap.getHeight());
+    private double getScratchedCount(Bitmap bitmap) {
+        int[] pixels = new int[bitmap.getWidth() * bitmap.getHeight()];
+        bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
 
         double scratched = 0;
-        for(int x = 0; x < cachedBitmap.getWidth(); x++){
-            for(int y = 0; y < cachedBitmap.getHeight(); y++){
-                if(Color.alpha(pixels[y * cachedBitmap.getWidth() + x]) == 0) scratched++;
-            }
-        }
+        for(int x = 0; x < bitmap.getWidth(); x++)
+            for(int y = 0; y < bitmap.getHeight(); y++)
+                if(Color.alpha(pixels[y * bitmap.getWidth() + x]) == 0)
+                    scratched++;
 
         return scratched;
     }
 
-    private void resetCachedImage() {
-        if(cachedBitmap != null) cachedBitmap.recycle();
-        cachedBitmap = null;
-
-        getDrawingCachedBitmap(new CachedImageEventListener() {
-            public void onCachedImageAvailable(Bitmap bitmap) {
-                cachedBitmap = bitmap;
-            }
-        });
-    }
-
-    private void getDrawingCachedBitmap(final CachedImageEventListener eventListener) {
+    private void getUpdatedDrawingCache() {
         controller.getScratchImageLayout().post(new Runnable() {
             public void run() {
                 controller.getScratchImageLayout().setDrawingCacheEnabled(true);
-                eventListener.onCachedImageAvailable(Bitmap.createBitmap(controller.getScratchImageLayout().getDrawingCache()));
+                currentBitmap = Bitmap.createBitmap(controller.getScratchImageLayout().getDrawingCache());
                 controller.getScratchImageLayout().setDrawingCacheEnabled(false);
             }
         });
@@ -82,10 +81,18 @@ public class ScratchGridThresholdProcessor extends ProcessorThread {
     }
 
     @Override
-    public void cancel() {
+    public void cancel(){
         super.cancel();
 
-        if(cachedBitmap != null) cachedBitmap.recycle();
+        safelyReleaseCurrentBitmap();
+    }
+
+    private void safelyReleaseCurrentBitmap(){
+        try{
+            currentBitmap.recycle();
+            currentBitmap = null;
+        }
+        catch(Exception e){ e.printStackTrace(); }
     }
 
 }
