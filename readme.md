@@ -12,15 +12,15 @@ A simple library for implementing a scratchoff-type system.
     }
 
     dependencies {
-        compile('com.guardanis:scratchoff:1.0.0')
+        compile('com.guardanis:scratchoff:1.0.1')
     }
 ```
 
 # Usage
 
-The goal of this library is to use the drawing cache of a View below it and allow what appears to the user as scratching away the surface to reveal what's hidden below. 
+The goal of this library is to create a scratchoff interface. By storing and manipulating the drawing cache of a View, we can create the effect of scratching it away to reveal what's hidden below. 
 
-First, you need a RelativeLayout (to align layouts on top of one another) consisting of 2 sub-layouts, a behind-View and the *ScratchImageLayout* (which is a LinearLayout containing a single ImageView) to be displayed in the foreground. Here is a simple example:
+First, you need a RelativeLayout (to align layouts on top of one another) consisting of 2 sub-layouts, a behind-View and the *ScratchImageLayout* (which is a LinearLayout containing any number of children) to be displayed in the foreground. Here is a simple example:
 
 ```
     <RelativeLayout
@@ -59,7 +59,7 @@ First, you need a RelativeLayout (to align layouts on top of one another) consis
     </RelativeLayout>
 ```
 
-Note: be careful with the dimensions of both the behind-View and the ScratchImageLayout. If they don't overlap perfectly, the scratchoff system could become visually distorted.
+Note: be careful with the dimensions of both the behind-View and the ScratchImageLayout. The ScratchImageLayout will attempt to set its LayoutParam attributes for width/height to that of the behind View so they line up perfectly. 
 
 Now that you have a layout, we need to attach the *ScratchViewController* to it:
 
@@ -76,5 +76,23 @@ Now that you have a layout, we need to attach the *ScratchViewController* to it:
     //controller.setFadeOnClear(true);
 ```
 
-As a final note, if using the ScratchViewController in the context of an Activity, you may want to also ensure you call the correct lifecycle methods for *onPause()*, *onResume()*, and *onDestroy()* as needed, to ensure the processors will stop/restart and not run needlessly in the background.
+As a final note, if using the ScratchViewController in the context of an Activity, you may want to also ensure you call the correct lifecycle methods for *onPause()*, *onResume()*, and *onDestroy()* as needed, to ensure the processors will stop/restart and not run needlessly in the background. e.g.
+
+    @Override
+    public void onPause(){
+        controller.onPause();
+        super.onPause();
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        controller.onResume();
+    }
+
+    @Override
+    public void onDestroy(){
+        controller.onDestroy();
+        super.onDestroy();
+    }
 
