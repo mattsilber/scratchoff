@@ -1,3 +1,7 @@
+This library has been deprecated in favor of: https://github.com/jackpocket/android_scratchoff
+
+
+
 # Scratchoff
 
 A simple library for implementing a scratchoff-type system.
